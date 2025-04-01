@@ -1,0 +1,5 @@
+danielP, adityaA, jaydenZ, jackieZ -- 2025-03-27 11:47
+Discussed and redistributed roles in design doc
+
+adityaA -- 2025-03-30 12:00
+Added login and logout info to design doc
