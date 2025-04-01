@@ -3,3 +3,6 @@ Discussed and redistributed roles in design doc
 
 adityaA -- 2025-03-30 12:00
 Added login and logout info to design doc
+
+adityaA -- 2025-04-30 11:47
+Requirements.txt, created working app, added summary to readme
