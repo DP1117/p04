@@ -7,5 +7,3 @@ def hello_world():
     print(__name__)                  
   
 app.run()                                
-
-
