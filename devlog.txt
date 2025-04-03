@@ -4,5 +4,12 @@ Discussed and redistributed roles in design doc
 adityaA -- 2025-03-30 12:00
 Added login and logout info to design doc
 
-adityaA -- 2025-04-30 11:47
+adityaA -- 2025-03-30 11:47
 Requirements.txt, created working app, added summary to readme
+
+jaydenZ -- 2025-04-02 11:47
+Created droplet and allocated accounts to each team member.
+
+jaydenZ -- 2025-04-03 10:30
+Added install guide for p04.
+
