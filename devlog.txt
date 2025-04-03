@@ -10,6 +10,12 @@ Requirements.txt, created working app, added summary to readme
 jaydenZ -- 2025-04-02 11:47
 Created droplet and allocated accounts to each team member.
 
+adityaA -- 2025-04-02 11:47
+Worked with team to analyze dataset
+
 jaydenZ -- 2025-04-03 10:30
 Added install guide for p04.
+
+adityaA -- 2025-04-03 11:47
+Worked on droplet with team
 
