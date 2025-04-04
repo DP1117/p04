@@ -19,3 +19,5 @@ Added install guide for p04.
 adityaA -- 2025-04-03 11:47
 Worked on droplet and login code with team
 
+danielP, adityaA, jaydenZ, jackieZ-- 2025-04-04 11:47
+Conferred with team about next steps
