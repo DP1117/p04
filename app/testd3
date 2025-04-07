@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Animated D3 Dashboard</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f4f4f9;
+      margin: 0;
+      padding: 2rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 2rem;
+    }
+
+    h2 {
+      text-align: center;
+      color: #333;
+    }
+
+    svg {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+
+    .bar {
+      fill: #6a67ce;
+    }
+
+    .bar:hover {
+      fill: #a66dd4;
+    }
+
+    .line {
+      fill: none;
+      stroke: #67b7dc;
+      stroke-width: 3px;
+    }
+
+    .dot {
+      fill: #ff6b6b;
+    }
+
+    .arc {
+      stroke: #fff;
+      stroke-width: 2px;
+    }
+  </style>
+</head>
+<body>
+
+  <div>
+    <h2>Bars Bars Barzzz</h2>
+    <svg id="bar-chart" width="350" height="300"></svg>
+  </div>
+
+  <div>
+    <h2>Line</h2>
+    <svg id="line-chart" width="350" height="300"></svg>
+  </div>
+
+  <div>
+    <h2>Pieeee</h2>
+    <svg id="pie-chart" width="350" height="300"></svg>
+  </div>
+
+  <script>
+
+    const barData = [25, 40, 15, 60, 20, 65, 75];
+    const barSvg = d3.select("#bar-chart");
+    const barMargin = { top: 20, right: 20, bottom: 30, left: 40 };
+    const barWidth = +barSvg.attr("width") - barMargin.left - barMargin.right;
+    const barHeight = +barSvg.attr("height") - barMargin.top - barMargin.bottom;
+
+    const barX = d3.scaleBand().domain(barData.map((_, i) => i)).range([0, barWidth]).padding(0.1);
+    const barY = d3.scaleLinear().domain([0, d3.max(barData)]).range([barHeight, 0]);
+
+    const barGroup = barSvg.append("g")
+      .attr("transform", `translate(${barMargin.left},${barMargin.top})`);
+
+    barGroup.selectAll(".bar")
+      .data(barData)
+      .enter().append("rect")
+      .attr("class", "bar")
+      .attr("x", (d, i) => barX(i))
+      .attr("y", barHeight)
+      .attr("height", 0)
+      .attr("width", barX.bandwidth())
+      .transition()
+      .duration(1000)
+      .delay((d, i) => i * 100)
+      .attr("y", d => barY(d))
+      .attr("height", d => barHeight - barY(d));
+
+    barGroup.append("g")
+      .attr("transform", `translate(0,${barHeight})`)
+      .call(d3.axisBottom(barX).tickFormat(i => `#${i + 1}`));
+
+    barGroup.append("g").call(d3.axisLeft(barY));
+
+
+    const lineData = [10, 20, 40, 35, 50, 60, 80];
+    const lineSvg = d3.select("#line-chart");
+    const lineGroup = lineSvg.append("g").attr("transform", `translate(40,20)`);
+
+    const lineX = d3.scaleLinear().domain([0, lineData.length - 1]).range([0, 270]);
+    const lineY = d3.scaleLinear().domain([0, d3.max(lineData)]).range([230, 0]);
+
+    const line = d3.line()
+      .x((d, i) => lineX(i))
+      .y(d => lineY(d))
+      .curve(d3.curveMonotoneX);
+
+    const path = lineGroup.append("path")
+      .datum(lineData)
+      .attr("class", "line")
+      .attr("d", line);
+
+    const totalLength = path.node().getTotalLength();
+
+    path
+      .attr("stroke-dasharray", `${totalLength} ${totalLength}`)
+      .attr("stroke-dashoffset", totalLength)
+      .transition()
+      .duration(1500)
+      .ease(d3.easeLinear)
+      .attr("stroke-dashoffset", 0);
+
+    lineGroup.selectAll(".dot")
+      .data(lineData)
+      .enter().append("circle")
+      .attr("class", "dot")
+      .attr("cx", (d, i) => lineX(i))
+      .attr("cy", lineY(0))
+      .attr("r", 4)
+      .transition()
+      .delay((d, i) => 1500 + i * 100)
+      .duration(500)
+      .attr("cy", d => lineY(d));
+
+    lineGroup.append("g").attr("transform", "translate(0,230)").call(d3.axisBottom(lineX).ticks(6));
+    lineGroup.append("g").call(d3.axisLeft(lineY));
+
+
+    const pieData = [10, 20, 30, 40];
+    const pieSvg = d3.select("#pie-chart")
+      .append("g")
+      .attr("transform", `translate(175,150)`);
+
+    const color = d3.scaleOrdinal()
+      .domain(pieData)
+      .range(["#ff6384", "#36a2eb", "#cc65fe", "#ffce56"]);
+
+    const pie = d3.pie();
+    const arc = d3.arc()
+      .innerRadius(50)
+      .outerRadius(100);
+
+    pieSvg.selectAll("path")
+      .data(pie(pieData))
+      .enter().append("path")
+      .attr("class", "arc")
+      .attr("fill", (d, i) => color(i))
+      .transition()
+      .delay((d, i) => i * 300)
+      .duration(1000)
+      .attrTween("d", function(d) {
+        const i = d3.interpolate({ startAngle: 0, endAngle: 0 }, d);
+        return function(t) {
+          return arc(i(t));
+        };
+      });
+  </script>
+</body>
+</html>
