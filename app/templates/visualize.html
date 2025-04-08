@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2 class="text-xl mb-4 font-semibold">Explore Spotify Trends</h2>
+
+<div class="mb-4 flex flex-col md:flex-row gap-4">
+  <label>
+    <span class="block text-sm font-medium text-gray-700">X Axis:</span>
+    <select id="xSelect" class="border p-2 rounded w-48">
+      {% for col in columns %}
+        <option value="{{ col }}">{{ col|capitalize }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label>
+    <span class="block text-sm font-medium text-gray-700">Y Axis:</span>
+    <select id="ySelect" class="border p-2 rounded w-48">
+      {% for col in columns %}
+        <option value="{{ col }}" {% if col == 'popularity' %}selected{% endif %}>{{ col|capitalize }}</option>
+      {% endfor %}
+    </select>
+  </label>
+</div>
+
+<div id="chart" class="w-full h-[500px]"></div>
+
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script>
+  const data = {{ data | tojson }};
+  const columns = {{ columns | tojson }};
+  const margin = { top: 40, right: 30, bottom: 50, left: 60 };
+  const width = 800 - margin.left - margin.right;
+  const height = 500 - margin.top - margin.bottom;
+
+  const svg = d3.select("#chart").append("svg")
+      .attr("width", width + margin.left + margin.right)
+      .attr("height", height + margin.top + margin.bottom)
+    .append("g")
+      .attr("transform", `translate(${margin.left},${margin.top})`);
+
+  const xAxisGroup = svg.append("g").attr("transform", `translate(0, ${height})`);
+  const yAxisGroup = svg.append("g");
+
+  const xLabel = svg.append("text")
+      .attr("x", width / 2)
+      .attr("y", height + 40)
+      .attr("text-anchor", "middle")
+      .attr("class", "text-sm font-semibold");
+
+  const yLabel = svg.append("text")
+      .attr("transform", "rotate(-90)")
+      .attr("y", -45)
+      .attr("x", -height / 2)
+      .attr("text-anchor", "middle")
+      .attr("class", "text-sm font-semibold");
+
+  const updateChart = (xKey, yKey) => {
+    const x = d3.scaleLinear()
+      .domain(d3.extent(data, d => +d[xKey])).nice()
+      .range([0, width]);
+
+    const y = d3.scaleLinear()
+      .domain(d3.extent(data, d => +d[yKey])).nice()
+      .range([height, 0]);
+
+    const dots = svg.selectAll("circle").data(data);
+
+    dots.enter()
+      .append("circle")
+      .merge(dots)
+      .transition()
+      .duration(800)
+      .attr("cx", d => x(d[xKey]))
+      .attr("cy", d => y(d[yKey]))
+      .attr("r", 3)
+      .attr("fill", "teal")
+      .attr("opacity", 0.6);
+
+    dots.exit().remove();
+
+    xAxisGroup.transition().duration(800).call(d3.axisBottom(x));
+    yAxisGroup.transition().duration(800).call(d3.axisLeft(y));
+
+    xLabel.text(xKey.charAt(0).toUpperCase() + xKey.slice(1));
+    yLabel.text(yKey.charAt(0).toUpperCase() + yKey.slice(1));
+  };
+
+  const xSelect = document.getElementById("xSelect");
+  const ySelect = document.getElementById("ySelect");
+
+  xSelect.addEventListener("change", () => updateChart(xSelect.value, ySelect.value));
+  ySelect.addEventListener("change", () => updateChart(xSelect.value, ySelect.value));
+
+  updateChart(xSelect.value, ySelect.value);
+</script>
+{% endblock %}

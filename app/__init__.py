@@ -15,7 +15,7 @@ warnings.filterwarnings('ignore')
 pd.set_option('display.max_columns',None)
 init_notebook_mode(connected=True)
 
-df=pd.read_csv('/kaggle/input/top-hits-spotify-from-20002019/songs_normalize.csv')
+df=pd.read_csv('songs_normalize.csv')
 
 
 
@@ -81,6 +81,11 @@ def logout():
     session.pop('user', None)
     return redirect(url_for('home'))
 
+@app.route('/visualize')
+def visualize():
+    numeric_cols = df.select_dtypes(include=['float64', 'int64']).columns.tolist()
+    data = df[numeric_cols].dropna().to_dict(orient='records')
+    return render_template('visualize.html', data=data, columns=numeric_cols)
 
 
 if __name__ == '__main__':
