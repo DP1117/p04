@@ -29,7 +29,9 @@ adityaA -- 2025-04-07 11:47
 Explored D3
 
 danielP, adityaA, jaydenZ, jackieZ -- 2025-04-09 11:47
-Worked on linking D3 to our dataset
+Worked on linking D3 to our dataset. Successfully created a graph to demonstrate our data.
 
 DESIGN REVISIONS THUS FAR:
-- Made D3 goals more specific
+- Made D3 goals more specific.
+- Fixed issues with the specificity of the columns for the dataset.
+- Added more details to how we plan to use D3 and included the packages that is needed to run our application. 
