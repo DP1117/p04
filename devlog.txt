@@ -28,8 +28,8 @@ Worked on linking subdomain
 adityaA -- 2025-04-07 11:47
 Explored D3
 
-danielP, adityaA, jaydenZ, jackieZ -- 2025-04-09 11:47
-Worked on linking D3 to our dataset. Successfully created a graph to demonstrate our data.
+adityaA, jaydenZ -- 2025-04-10 11:47
+Worked on errors that prevented running
 
 DESIGN REVISIONS THUS FAR:
 - Made D3 goals more specific.
