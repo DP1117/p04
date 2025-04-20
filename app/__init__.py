@@ -87,6 +87,12 @@ def visualize():
     data = df[numeric_cols].dropna().to_dict(orient='records')
     return render_template('visualize.html', data=data, columns=numeric_cols)
 
+@app.route('/histo')
+def histo():
+    if 'popularity' not in df.columns:
+        return "Popularity column not found in the dataset."
+    data = df[['popularity']].dropna().to_dict(orient='records')
+    return render_template('histo.html', data=data)
 
 if __name__ == '__main__':
     init_db()
