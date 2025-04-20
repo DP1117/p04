@@ -1,80 +1,85 @@
 {% extends 'base.html' %}
+
 {% block content %}
-<h2 class="text-xl mb-4 font-semibold">Track Popularity Distribution</h2>
+  <h2 class="text-xl mb-4 font-semibold">Track Popularity Distribution</h2>
 
-<div class="mb-4 w-full md:w-1/2">
-  <label>
-    <span class="block text-sm font-medium text-gray-700">Number of Bins:</span>
-    <input type="range" id="binSlider" min="5" max="50" value="20" class="w-full">
-  </label>
-</div>
+  <label for="binSlider" class="block mb-2">Number of Bins: <span id="binCountLabel">20</span></label>
+  <input type="range" id="binSlider" min="5" max="50" value="20" class="mb-6 w-full">
 
-<div id="histogram" class="w-full h-[500px]"></div>
+  <div id="histogram" class="w-full h-[500px]"></div>
 
-<script src="https://d3js.org/d3.v7.min.js"></script>
-<script>
-  const data = {{ data | tojson }};
-  const margin = { top: 40, right: 30, bottom: 50, left: 60 };
-  const width = 800 - margin.left - margin.right;
-  const height = 500 - margin.top - margin.bottom;
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script>
+    const data = {{ data | tojson }};
+    const popularityValues = data.map(d => d.popularity);
 
-  const svg = d3.select("#histogram").append("svg")
+    const margin = { top: 40, right: 30, bottom: 50, left: 60 };
+    const width = 800 - margin.left - margin.right;
+    const height = 500 - margin.top - margin.bottom;
+
+    const svg = d3.select("#histogram").append("svg")
       .attr("width", width + margin.left + margin.right)
       .attr("height", height + margin.top + margin.bottom)
-    .append("g")
+      .append("g")
       .attr("transform", `translate(${margin.left},${margin.top})`);
 
-  const xAxisGroup = svg.append("g").attr("transform", `translate(0, ${height})`);
-  const yAxisGroup = svg.append("g");
+    const x = d3.scaleLinear().domain([0, 100]).range([0, width]);
+    const xAxisGroup = svg.append("g").attr("transform", `translate(0,${height})`);
 
-  const xLabel = svg.append("text")
-    .attr("x", width / 2)
-    .attr("y", height + 40)
-    .attr("text-anchor", "middle")
-    .attr("class", "text-sm font-semibold")
-    .text("Popularity");
+    const y = d3.scaleLinear().range([height, 0]);
+    const yAxisGroup = svg.append("g");
 
-  const yLabel = svg.append("text")
-    .attr("transform", "rotate(-90)")
-    .attr("y", -45)
-    .attr("x", -height / 2)
-    .attr("text-anchor", "middle")
-    .attr("class", "text-sm font-semibold")
-    .text("Number of Songs");
+    const xLabel = svg.append("text")
+      .attr("x", width / 2)
+      .attr("y", height + margin.bottom - 10)
+      .attr("text-anchor", "middle")
+      .text("Popularity");
 
-  const updateHistogram = (binCount) => {
-    const x = d3.scaleLinear()
-      .domain([0, 100])
-      .range([0, width]);
+    const yLabel = svg.append("text")
+      .attr("transform", "rotate(-90)")
+      .attr("y", -margin.left + 20)
+      .attr("x", -height / 2)
+      .attr("text-anchor", "middle")
+      .text("Number of Songs");
 
-    const histogram = d3.histogram()
-      .value(d => d.popularity)
-      .domain(x.domain())
-      .thresholds(x.ticks(binCount));
+    const updateHistogram = (binCount) => {
+      const histogram = d3.histogram()
+        .domain(x.domain())
+        .thresholds(x.ticks(binCount));
 
-    const bins = histogram(data);
+      const bins = histogram(popularityValues);
 
-    const y = d3.scaleLinear()
-      .domain([0, d3.max(bins, d => d.length)])
-      .range([height, 0]);
+      y.domain([0, d3.max(bins, d => d.length)]);
 
-    const bars = svg.selectAll("rect").data(bins);
+      const bars = svg.selectAll("rect").data(bins);
 
-    bars.enter()
-      .append("rect")
-      .merge(bars)
-      .transition()
-      .duration(800)
-      .attr("x", d => x(d.x0))
-      .attr("y", d => y(d.length))
-      .attr("width", d => x(d.x1) - x(d.x0) - 1)
-      .attr("height", d => height - y(d.length))
-      .attr("fill", "#6366f1");
+      bars.enter().append("rect")
+        .merge(bars)
+        .transition()
+        .duration(500)
+        .attr("x", d => x(d.x0) + 1)
+        .attr("y", d => y(d.length))
+        .attr("width", d => Math.max(0, x(d.x1) - x(d.x0) - 1))
+        .attr("height", d => height - y(d.length))
+        .attr("fill", "#3b82f6");
 
-    bars.exit().remove();
+      bars.exit().remove();
 
-    xAxisGroup.transition().duration(800).call(d3.axisBottom(x));
-    yAxisGroup.transition().duration(800).call(d3.axisLeft(y));
-  };
+      xAxisGroup.transition().duration(500).call(d3.axisBottom(x));
+      yAxisGroup.transition().duration(500).call(d3.axisLeft(y));
+    };
 
-  document.getElementById("binSlider").addEvent
+    // Slider interaction
+    const slider = document.getElementById("binSlider");
+    const label = document.getElementById("binCountLabel");
+
+    slider.addEventListener("input", function() {
+      const binCount = +this.value;
+      label.textContent = binCount;
+      updateHistogram(binCount);
+    });
+
+    // Initial histogram
+    updateHistogram(+slider.value);
+  </script>
+{% endblock %}
