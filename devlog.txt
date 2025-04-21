@@ -35,3 +35,6 @@ DESIGN REVISIONS THUS FAR:
 - Made D3 goals more specific.
 - Fixed issues with the specificity of the columns for the dataset.
 - Added more details to how we plan to use D3 and included the packages that is needed to run our application. 
+
+jaydenZ -- 2025-04-21 10:30
+Worked on the css and html functionalities of the website; followed the devlog.
