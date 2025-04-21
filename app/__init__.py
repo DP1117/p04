@@ -93,6 +93,31 @@ def histo():
 def about():
     return render_template('about.html')
 
+@app.route('/matrix')
+@app.route('/matrix')
+def matrix():
+    features = ['popularity', 'danceability', 'energy', 'loudness', 'speechiness',
+                'acousticness', 'liveness', 'valence', 'tempo']
+    data = df[features].dropna().to_dict(orient='records')
+    return render_template('matrix.html', data=data, features=features)
+
+@app.route('/correlationmatrix')
+def correlationmatrix():
+    corr_matrix = df.corr(numeric_only=True).round(3)
+    labels = corr_matrix.columns.tolist()
+    matrix_data = []
+
+    for i, row in enumerate(labels):
+        for j, col in enumerate(labels):
+            matrix_data.append({
+                "row": row,
+                "col": col,
+                "value": corr_matrix.iloc[i, j]
+            })
+
+    return render_template("correlationmatrix.html", labels=labels, matrix=matrix_data)
+
+
 if __name__ == '__main__':
     init_db()
     app.run(debug=True)

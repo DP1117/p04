@@ -1,0 +1,151 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2 class="text-3xl font-bold mb-6 text-center text-green-700">Pairwise Correlation Matrix</h2>
+
+<div class="flex flex-col items-center">
+  <div id="heatmap"></div>
+  <div id="legend" class="mt-4"></div>
+</div>
+
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script>
+const labels = {{ labels | tojson }};
+const matrix = {{ matrix | tojson }};
+const cellSize = 45;
+const margin = { top: 100, right: 30, bottom: 30, left: 100 };
+const width = labels.length * cellSize;
+const height = labels.length * cellSize;
+
+const colorScale = d3.scaleSequential()
+  .domain([-1, 1])
+  .interpolator(d3.interpolateGreens);
+
+
+const svg = d3.select("#heatmap")
+  .append("svg")
+  .attr("width", width + margin.left + margin.right)
+  .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+  .attr("transform", `translate(${margin.left},${margin.top})`);
+
+
+const tooltip = d3.select("body")
+  .append("div")
+  .style("position", "absolute")
+  .style("opacity", 0)
+  .attr("class", "bg-black text-white text-xs px-2 py-1 rounded shadow pointer-events-none");
+
+
+svg.append("g")
+  .selectAll("text")
+  .data(labels)
+  .enter()
+  .append("text")
+  .attr("x", (_, i) => i * cellSize + cellSize / 2)
+  .attr("y", -8)
+  .text(d => d)
+  .attr("text-anchor", "start")
+  .attr("transform", (_, i) => `rotate(-45, ${i * cellSize + cellSize / 2}, -8)`)
+  .attr("font-size", "10px");
+
+
+svg.append("g")
+  .selectAll("text")
+  .data(labels)
+  .enter()
+  .append("text")
+  .attr("y", (_, i) => i * cellSize + cellSize / 2)
+  .attr("x", -8)
+  .text(d => d)
+  .attr("text-anchor", "end")
+  .attr("alignment-baseline", "middle")
+  .attr("font-size", "10px");
+
+
+const cells = svg.selectAll()
+  .data(matrix)
+  .enter()
+  .append("rect")
+  .attr("x", d => labels.indexOf(d.col) * cellSize)
+  .attr("y", d => labels.indexOf(d.row) * cellSize)
+  .attr("width", cellSize)
+  .attr("height", cellSize)
+  .attr("rx", 5)
+  .attr("ry", 5)
+  .attr("fill", "#fff")
+  .attr("stroke", "#333")
+  .on("mouseover", (event, d) => {
+    tooltip.transition().duration(200).style("opacity", 0.95);
+    tooltip
+      .html(`<strong>${d.row} x ${d.col}</strong><br>Correlation: <b>${d.value.toFixed(2)}</b>`)
+      .style("left", (event.pageX + 15) + "px")
+      .style("top", (event.pageY - 20) + "px");
+    d3.select(event.currentTarget).attr("stroke-width", 2).attr("stroke", "#111");
+  })
+  .on("mousemove", event => {
+    tooltip.style("left", (event.pageX + 15) + "px")
+           .style("top", (event.pageY - 20) + "px");
+  })
+  .on("mouseout", (event) => {
+    tooltip.transition().duration(200).style("opacity", 0);
+    d3.select(event.currentTarget).attr("stroke", "#333").attr("stroke-width", 1);
+  });
+
+
+cells.transition()
+  .duration(800)
+  .delay((_, i) => i * 2)
+  .attr("fill", d => colorScale(d.value));
+
+
+svg.selectAll()
+  .data(matrix)
+  .enter()
+  .append("text")
+  .attr("x", d => labels.indexOf(d.col) * cellSize + cellSize / 2)
+  .attr("y", d => labels.indexOf(d.row) * cellSize + cellSize / 2)
+  .text(d => d.value.toFixed(2))
+  .attr("text-anchor", "middle")
+  .attr("alignment-baseline", "middle")
+  .attr("font-size", "9px")
+  .attr("fill", d => Math.abs(d.value) > 0.5 ? "#fff" : "#111")
+  .style("opacity", 0)
+  .transition()
+  .duration(500)
+  .delay((_, i) => 150 + i * 2)
+  .style("opacity", 1);
+
+
+const legendSvg = d3.select("#legend")
+  .append("svg")
+  .attr("width", 200)
+  .attr("height", 50);
+
+const legendScale = d3.scaleLinear().domain([-1, 1]).range([0, 160]);
+
+const legendAxis = d3.axisBottom(legendScale).ticks(5).tickFormat(d3.format(".1f"));
+
+const defs = legendSvg.append("defs");
+const linearGradient = defs.append("linearGradient")
+  .attr("id", "legendGradient");
+
+linearGradient.selectAll("stop")
+  .data(d3.range(0, 1.01, 0.01))
+  .enter()
+  .append("stop")
+  .attr("offset", d => `${d * 100}%`)
+  .attr("stop-color", d => colorScale(d * 2 - 1));
+
+legendSvg.append("rect")
+  .attr("x", 20)
+  .attr("y", 10)
+  .attr("width", 160)
+  .attr("height", 12)
+  .style("fill", "url(#legendGradient)");
+
+legendSvg.append("g")
+  .attr("transform", "translate(20, 22)")
+  .call(legendAxis)
+  .attr("font-size", "10px");
+</script>
+{% endblock %}

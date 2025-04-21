@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2 class="text-2xl font-bold text-gray-800 mb-4">Interactive Feature Distributions</h2>
+
+
+<label class="block text-sm font-semibold mb-2 text-gray-700">Select Features to Plot:</label>
+<select id="featureSelect" multiple class="w-full border p-2 rounded mb-4">
+  {% for feat in features %}
+    <option value="{{ feat }}" selected>{{ feat }}</option>
+  {% endfor %}
+</select>
+<p class="text-xs text-gray-500 mb-4">Hold Ctrl (Windows) or Command (Mac) to select multiple</p>
+
+
+<div class="grid grid-cols-3 gap-6" id="matrixGrid"></div>
+
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script>
+const rawData = {{ data | tojson }};
+const allFeatures = {{ features | tojson }};
+const margin = { top: 20, right: 10, bottom: 30, left: 30 };
+const width = 250 - margin.left - margin.right;
+const height = 180 - margin.top - margin.bottom;
+const colors = d3.scaleOrdinal(d3.schemeCategory10);
+
+// Tooltip
+const tooltip = d3.select("body")
+  .append("div")
+  .attr("class", "absolute bg-black text-white text-xs px-2 py-1 rounded shadow-lg pointer-events-none")
+  .style("opacity", 0);
+
+function drawMatrix(featuresToShow) {
+  const matrix = d3.select("#matrixGrid");
+  matrix.selectAll("*").remove();
+
+  featuresToShow.forEach((feature, i) => {
+    const container = matrix.append("div")
+      .attr("class", "bg-white shadow rounded p-2");
+
+    container.append("h3")
+      .text(feature.charAt(0).toUpperCase() + feature.slice(1))
+      .attr("class", "text-sm text-center font-semibold mb-2");
+
+    const svgContainer = container.append("svg")
+      .attr("width", width + margin.left + margin.right)
+      .attr("height", height + margin.top + margin.bottom);
+
+    const chart = svgContainer.append("g")
+      .attr("transform", `translate(${margin.left},${margin.top})`);
+
+    const values = rawData.map(d => +d[feature]);
+
+    const xOrig = d3.scaleLinear().domain(d3.extent(values)).nice().range([0, width]);
+    let x = xOrig.copy();
+    let y = d3.scaleLinear().range([height, 0]);
+
+    const xAxis = chart.append("g").attr("transform", `translate(0,${height})`).attr("font-size", "8px");
+    const yAxis = chart.append("g").attr("font-size", "8px");
+
+    const render = () => {
+      const bins = d3.histogram().domain(x.domain()).thresholds(x.ticks(15))(values);
+      y.domain([0, d3.max(bins, d => d.length)]).nice();
+
+      const rects = chart.selectAll("rect").data(bins, d => d.x0);
+
+      rects.enter().append("rect")
+        .merge(rects)
+        .attr("x", d => x(d.x0) + 1)
+        .attr("y", d => y(d.length))
+        .attr("width", d => Math.max(0, x(d.x1) - x(d.x0) - 1))
+        .attr("height", d => height - y(d.length))
+        .attr("fill", colors(i))
+        .attr("opacity", 0.7)
+        .on("mouseover", (event, d) => {
+          tooltip.transition().duration(200).style("opacity", 0.95);
+          tooltip.html(`<strong>${feature}</strong><br>Range: ${d.x0.toFixed(2)} – ${d.x1.toFixed(2)}<br>Count: ${d.length}`);
+          d3.select(event.target).attr("opacity", 1);
+        })
+        .on("mousemove", (event) => {
+          tooltip.style("left", `${event.pageX + 10}px`).style("top", `${event.pageY - 28}px`);
+        })
+        .on("mouseout", (event) => {
+          tooltip.transition().duration(200).style("opacity", 0);
+          d3.select(event.target).attr("opacity", 0.7);
+        });
+
+      rects.exit().remove();
+
+      xAxis.call(d3.axisBottom(x).ticks(4));
+      yAxis.call(d3.axisLeft(y).ticks(4));
+    };
+
+
+    render();
+
+
+    const zoom = d3.zoom()
+      .scaleExtent([1, 10])
+      .translateExtent([[0, 0], [width, height]])
+      .on("zoom", (event) => {
+        x = event.transform.rescaleX(xOrig);
+        render();
+      });
+
+    svgContainer.call(zoom);
+  });
+}
+
+
+drawMatrix(allFeatures);
+
+
+document.getElementById("featureSelect").addEventListener("change", function () {
+  const selected = Array.from(this.selectedOptions).map(opt => opt.value);
+  drawMatrix(selected.slice(0, 9));
+});
+</script>
+
+
+
+{% endblock %}
