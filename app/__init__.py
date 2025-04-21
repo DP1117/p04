@@ -17,15 +17,10 @@ pd.set_option('display.max_columns',None)
 
 df=pd.read_csv('songs_normalize.csv')
 
-
-
-
 app = Flask(__name__)
 app.secret_key = 'supersecretkey'
 
 DB_PATH = 'users.db'
-
-
 def init_db():
     if not os.path.exists(DB_PATH):
         with sqlite3.connect(DB_PATH) as conn:
@@ -93,6 +88,10 @@ def histo():
         return "Popularity column not found in the dataset."
     data = df[['popularity']].dropna().to_dict(orient='records')
     return render_template('histo.html', data=data)
+
+@app.route('/about')
+def about():
+    return render_template('about.html')
 
 if __name__ == '__main__':
     init_db()

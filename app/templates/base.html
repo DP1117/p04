@@ -1,22 +1,46 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+
 <head>
-    <title>Spotify Auth</title>
+    <meta charset="UTF-8">
+    <title>Graphing Spotify</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --spotify-green: #1DB954;
+        }
+    </style>
 </head>
-<body class="bg-gray-100 p-6">
-    <nav class="mb-4">
-        <a href="{{ url_for('home') }}" class="mr-4">Home</a>
-        {% if 'user' in session %}
-            <span class="mr-4">Logged in as {{ session['user'] }}</span>
-            <a href="{{ url_for('logout') }}">Logout</a>
-        {% else %}
-            <a href="{{ url_for('login') }}" class="mr-4">Login</a>
-            <a href="{{ url_for('register') }}">Register</a>
-        {% endif %}
-    </nav>
-    <div>
-        {% block content %}{% endblock %}
-    </div>
+
+<body class="bg-gray-100 min-h-screen flex flex-col">
+
+    <header class="bg-[#1DB954] text-white shadow-md">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
+            <h1 class="text-xl font-bold">Spotify Trends</h1>
+            <nav class="space-x-4">
+                <a href="{{ url_for('home') }}" class="hover:underline">Home</a>
+                <a href="{{ url_for('about') }}" class="hover:underline">About</a>
+                {% if 'user' in session %}
+                <span class="font-semibold">Logged in as {{ session['user'] }}</span>
+                <a href="{{ url_for('logout') }}" class="hover:underline">Logout</a>
+                {% else %}
+                <a href="{{ url_for('login') }}" class="hover:underline">Login</a>
+                <a href="{{ url_for('register') }}" class="hover:underline">Register</a>
+                {% endif %}
+            </nav>
+        </div>
+    </header>
+
+    <main class="flex-grow">
+        <div class="max-w-6xl mx-auto px-4 py-6">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <footer class="bg-white border-t mt-8 py-4 text-center text-sm text-gray-600">
+        Made by Team CodeBlooded | © 2025
+    </footer>
+
 </body>
+
 </html>

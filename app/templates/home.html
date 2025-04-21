@@ -1,4 +1,42 @@
 {% extends 'base.html' %}
 {% block content %}
-<h1 class="text-xl font-bold">Welcome to the Spotify App!</h1>
+<div class="max-w-4xl mx-auto p-6 bg-white shadow-lg rounded-lg mt-8">
+    <h1 class="text-3xl font-extrabold text-blue-700 mb-4">Welcome to the Spotify Trends Visualizer!</h1>
+
+    <p class="mb-4 text-gray-700">
+        Spotify transformed music listening forever when it launched in Sweden in 2008. Discover, manage and share over 70m
+        tracks for free, or upgrade to Spotify Premium to access exclusive features including offline mode, improved sound
+        quality, and an ad-free music listening experience. Today, Spotify is the most popular global audio streaming service
+        with 365m users, including 165m subscribers across 178 markets. They are the largest driver of revenue to the music
+        business today.
+
+        <br><br>
+
+        Explore music trends across two decades with our interactive web app. Using
+        <b><a href="https://www.kaggle.com/code/varunsaikanuri/spotify-data-visualization/notebook">Spotify's Top Hits dataset (2000-2019)</a></b>, we help you uncover patterns in audio features like popularity, energy,
+        danceability, tempo, and more!
+    </p>
+
+    <ul class="list-disc list-inside mb-4 text-gray-700">
+        <li>Visualize features with D3-powered charts</li>
+        <li>Compare artists, songs, and genres</li>
+        <li>Filter by year, artist, and more</li>
+        <li>Login to save your preferences</li>
+    </ul>
+
+    <div class="flex justify-center mb-4">
+        <img src="{{ url_for('static', filename='spotify.svg') }}" alt="Spotify Logo" class="w-64 shadow-md rounded">
+    </div>
+
+    <div class="flex justify-center gap-4">
+        <a href="{{ url_for('visualize') }}"
+            class="bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-3 rounded-full shadow-lg transition duration-300">
+            Visualize Trends
+        </a>
+        <a href="{{ url_for('about') }}"
+            class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold px-6 py-3 rounded-full shadow-md transition duration-300">
+            About the Project
+        </a>
+    </div>
+</div>
 {% endblock %}
