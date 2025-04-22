@@ -6,13 +6,17 @@
 <script src="https://d3js.org/d3.v7.min.js"></script>
 <script>
 const data = {{ data | safe }};
-
 const width = 960;
 const height = 600;
 const format = d3.format(",d");
 const color = d3.scaleOrdinal(d3.schemeTableau10);
 
-// Tooltip
+const svg = d3.select("#treemap")
+  .append("svg")
+  .attr("viewBox", [0, 0, width, height])
+  .style("font-family", "sans-serif")
+  .style("font-size", "11px");
+
 const tooltip = d3.select("body").append("div")
   .style("position", "absolute")
   .style("background", "#111")
@@ -23,88 +27,60 @@ const tooltip = d3.select("body").append("div")
   .style("pointer-events", "none")
   .style("opacity", 0);
 
-const svg = d3.select("#treemap")
-  .append("svg")
-  .attr("viewBox", [0.5, -30.5, width, height + 30])
-  .style("font-family", "sans-serif")
-  .style("font-size", "11px");
-
 const root = d3.hierarchy(data).sum(d => d.value).sort((a, b) => b.value - a.value);
-d3.treemap().size([width, height]).padding(2).round(true)(root);
+const treemap = d3.treemap().size([width, height]).padding(2).round(true);
+treemap(root);
 
-let group = svg.append("g").call(render, root);
+let currentRoot = root;
+render(currentRoot);
 
-function render(group, root) {
-  const node = group
-    .selectAll("g")
+function render(root) {
+  svg.selectAll("g").remove(); // Clean up previous render
+  const group = svg.append("g");
+
+  const nodes = group.selectAll("g")
     .data(root.children)
     .join("g")
     .attr("transform", d => `translate(${d.x0},${d.y0})`);
 
-  node.append("rect")
-    .attr("id", d => (d.nodeUid = d3.uid("node")).id)
+  nodes.append("rect")
     .attr("fill", d => color(d.depth))
-    .attr("rx", 6)
-    .attr("ry", 6)
     .attr("width", d => d.x1 - d.x0)
     .attr("height", d => d.y1 - d.y0)
+    .attr("rx", 5)
+    .attr("ry", 5)
     .on("mouseover", (event, d) => {
       tooltip.transition().duration(200).style("opacity", 0.95);
-      tooltip.html(`
-        <strong>${d.data.name}</strong><br>
-        ${d.value ? `Popularity: ${format(d.value)}` : ''}
-      `);
+      tooltip.html(`<strong>${d.data.name}</strong><br>${d.value ? `Popularity: ${format(d.value)}` : ''}`);
     })
-    .on("mousemove", (event) => {
-      tooltip
-        .style("left", event.pageX + 15 + "px")
-        .style("top", event.pageY - 10 + "px");
+    .on("mousemove", event => {
+      tooltip.style("left", (event.pageX + 15) + "px").style("top", (event.pageY - 10) + "px");
     })
     .on("mouseout", () => {
       tooltip.transition().duration(200).style("opacity", 0);
     })
-    .on("click", (event, d) => d.children && zoomIn(d));
+    .on("click", (event, d) => {
+      if (d.children) zoomIn(d);
+    });
 
-  node.append("clipPath")
-    .attr("id", d => (d.clipUid = d3.uid("clip")).id)
-    .append("use")
-    .attr("xlink:href", d => d.nodeUid.href);
-
-  node.append("text")
-    .attr("clip-path", d => d.clipUid)
-    .selectAll("tspan")
-    .data(d => d.data.name.split(/(?=[A-Z][a-z])|\s+/g))
-    .join("tspan")
+  nodes.append("text")
     .attr("x", 6)
-    .attr("y", (d, i) => 13 + i * 10)
-    .text(d => d.length > 20 ? d.slice(0, 17) + "..." : d);
-
-  group.append("rect")
-    .attr("pointer-events", "none")
-    .attr("fill", "none")
-    .attr("stroke", "#999")
-    .attr("width", width)
-    .attr("height", height);
+    .attr("y", 14)
+    .text(d => {
+      const boxWidth = d.x1 - d.x0;
+      const name = d.data.name;
+      return name.length > 20 ? name.slice(0, 17) + "..." : name;
+    })
+    .attr("fill", "#fff")
+    .style("pointer-events", "none");
 }
 
 function zoomIn(d) {
-  const group0 = group.attr("opacity", 1);
-  group = svg.append("g").call(render, d);
-
-  const t1 = group.transition().duration(750);
-  const t0 = group0.transition().duration(750).attr("opacity", 0).remove();
-
-  svg.transition().duration(750).tween("scale", () => {
-    const x = d3.scaleLinear().domain([d.x0, d.x1]).range([0, width]);
-    const y = d3.scaleLinear().domain([d.y0, d.y1]).range([0, height]);
-    return t => {
-      svg.selectAll("g").attr("transform", node =>
-        `translate(${x(node.x0)},${y(node.y0)})`
-      );
-      svg.selectAll("rect").attr("width", node => x(node.x1) - x(node.x0))
-        .attr("height", node => y(node.y1) - y(node.y0));
-    };
-  });
+  currentRoot = d;
+  treemap(currentRoot); // recalculate layout
+  const t = svg.transition().duration(750);
+  render(currentRoot);
 }
 </script>
+
 {% endblock %}
