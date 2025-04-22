@@ -135,33 +135,31 @@ def correlationmatrix():
 
     return render_template("correlationmatrix.html", labels=labels, matrix=matrix_data)
 
-@app.route('/treemap')
-def treemap():
-    # only keep rows with no missing values in these columns
-    subset = df[['artist','genre','song','popularity']].dropna()
+@app.route('/topcharts')
+def topcharts():
+    subset = df[['artist', 'genre', 'song', 'popularity']].dropna()
 
-    # build the nested hierarchy
-    def build_hierarchy(df):
-        root = {"name":"All Songs","children":[]}
-        artist_map = {}
-        for _, row in df.iterrows():
-            artist, genre, song, pop = row["artist"], row["genre"], row["song"], float(row["popularity"])
-            if artist not in artist_map:
-                artist_node = {"name": artist, "children": []}
-                artist_map[artist] = artist_node
-                root["children"].append(artist_node)
-            # find or create genre under that artist
-            gen = next((g for g in artist_map[artist]["children"] if g["name"]==genre), None)
-            if not gen:
-                gen = {"name": genre, "children": []}
-                artist_map[artist]["children"].append(gen)
-            # append song leaf
-            gen["children"].append({"name": song, "value": pop})
-        return root
+    top_songs = (subset.sort_values(by='popularity', ascending=False)
+                 .head(15)[['song', 'artist', 'popularity']])
 
-    tree_data = build_hierarchy(subset)
-    # pass JSON string into template
-    return render_template('treemap.html', data=json.dumps(tree_data))
+    top_artists = (subset.groupby('artist')['popularity']
+                   .sum()
+                   .sort_values(ascending=False)
+                   .head(15)
+                   .reset_index())
+
+    top_genres = (subset['genre'].value_counts()
+                  .head(15)
+                  .reset_index()
+                  .rename(columns={'index': 'genre', 'genre': 'count'}))
+
+    return render_template(
+        "topcharts.html",
+        songs=top_songs.to_dict(orient="records"),
+        artists=top_artists.to_dict(orient="records"),
+        genres=top_genres.to_dict(orient="records")
+    )
+
 
 if __name__ == '__main__':
     init_db()
