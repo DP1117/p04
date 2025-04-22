@@ -37,7 +37,6 @@ Create login/register
 jackieZ -- 2025-4-12 11;50
 Added dropdown for x/y axis and graphs d3 with animation when switching between diff axis
 
-
 jackieZ -- 2025-4-21 11;50
 Added correlation matrix with D3 for each factor of song
 Create distributions with D3 for each factor
@@ -57,3 +56,7 @@ HOME STRETCH CHECKLIST:
 * Finish matrix part :: Aditya
 * Practice our own parts :: ALL TEAM MEMBERS
 ====================================
+
+jaydenZ -- 2025-04-22 11:56
+Fixed the axis problem so that you can't select two. Added comments to make it better understandable. 
+
