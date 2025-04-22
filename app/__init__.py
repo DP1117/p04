@@ -150,6 +150,7 @@ def treemap():
     tree_data = build_hierarchy(subset)
     return render_template("treemap.html", data=json.dumps(tree_data))
 
+
 if __name__ == '__main__':
     init_db()
     app.run(debug=True)
