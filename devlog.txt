@@ -25,11 +25,22 @@ Conferred with team about next steps
 danielP -- 2025-04-07 11:47
 Worked on linking subdomain
 
-adityaA -- 2025-04-07 11:47
+adityaA, jackieZ -- 2025-04-07 11:47
 Explored D3
 
 adityaA, jaydenZ -- 2025-04-10 11:47
 Worked on errors that prevented running
+
+jackieZ -- 2025-04-11 8:50
+Create login/register
+
+jackieZ -- 2025-4-12 11;50
+Added dropdown for x/y axis and graphs d3 with animation when switching between diff axis
+
+
+jackieZ -- 2025-4-21 11;50
+Added correlation matrix with D3 for each factor of song
+Create distributions with D3 for each factor
 
 DESIGN REVISIONS THUS FAR:
 - Made D3 goals more specific.
