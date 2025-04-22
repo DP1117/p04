@@ -1,21 +1,30 @@
 {% extends 'base.html' %}
 {% block content %}
-<h2 class="text-3xl font-bold mb-6 text-center text-green-700">Spotify Top Charts</h2>
+<h2 class="text-4xl font-bold mb-8 text-center text-green-700">Spotify Top Charts</h2>
 
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 px-6 mb-10">
-  <div><h3 class="text-xl font-semibold mb-2 text-center">🎵 Top Songs</h3><div id="songChart"></div></div>
-  <div><h3 class="text-xl font-semibold mb-2 text-center">🎤 Top Artists</h3><div id="artistChart"></div></div>
-  <div><h3 class="text-xl font-semibold mb-2 text-center">📚 Top Genres</h3><div id="genreChart"></div></div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-10 px-6 mb-20">
+  <!-- Top Songs -->
+  <div>
+    <h3 class="text-2xl font-semibold mb-4 text-center">🔥 Top Songs</h3>
+    <div id="songChart" class="overflow-auto"></div>
+  </div>
+
+  <!-- Top Artists -->
+  <div>
+    <h3 class="text-2xl font-semibold mb-4 text-center">🎤 Top Artists</h3>
+    <div id="artistChart" class="overflow-auto"></div>
+  </div>
 </div>
 
 <script src="https://d3js.org/d3.v7.min.js"></script>
 <script>
 const songData = {{ songs | tojson }};
 const artistData = {{ artists | tojson }};
-const genreData = {{ genres | tojson }};
 
-function renderBarChart(containerId, data, xKey, yKey, labelFormatter) {
-  const width = 300, height = 400, margin = { top: 10, right: 10, bottom: 10, left: 130 };
+function renderBarChart(containerId, data, xKey, yKey, labelKey, barColor = "#10b981") {
+  const width = 900;
+  const height = data.length * 40 + 100;
+  const margin = { top: 50, right: 100, bottom: 50, left: 350 };
 
   const svg = d3.select(containerId)
     .append("svg")
@@ -24,52 +33,51 @@ function renderBarChart(containerId, data, xKey, yKey, labelFormatter) {
 
   const y = d3.scaleBand()
     .domain(data.map(d => d[yKey]))
-    .range([0, height])
-    .padding(0.2);
+    .range([0, height - margin.top - margin.bottom])
+    .padding(0.3);
 
   const x = d3.scaleLinear()
     .domain([0, d3.max(data, d => +d[xKey])])
-    .nice()
     .range([0, width - margin.left - margin.right]);
 
-  const g = svg.append("g").attr("transform", `translate(${margin.left}, 0)`);
+  const g = svg.append("g")
+    .attr("transform", `translate(${margin.left},${margin.top})`);
 
   g.selectAll("rect")
     .data(data)
     .join("rect")
     .attr("x", 0)
     .attr("y", d => y(d[yKey]))
-    .attr("width", 0)
     .attr("height", y.bandwidth())
-    .attr("fill", "#10b981")
+    .attr("width", 0)
+    .attr("fill", barColor)
     .transition()
-    .duration(1000)
+    .duration(900)
     .attr("width", d => x(d[xKey]));
 
-
-  g.selectAll("text.name")
+  g.selectAll("text.label")
     .data(data)
     .join("text")
-    .attr("class", "name")
-    .attr("x", -10)
+    .attr("x", -15)
     .attr("y", d => y(d[yKey]) + y.bandwidth() / 2)
     .attr("text-anchor", "end")
     .attr("alignment-baseline", "middle")
-    .text(d => labelFormatter(d));
-
+    .attr("font-size", "14px")
+    .attr("fill", "#000")
+    .text(d => labelKey(d));
 
   g.selectAll("text.value")
     .data(data)
     .join("text")
-    .attr("class", "value")
-    .attr("x", d => x(d[xKey]) + 5)
+    .attr("x", d => x(d[xKey]) + 10)
     .attr("y", d => y(d[yKey]) + y.bandwidth() / 2)
     .attr("alignment-baseline", "middle")
+    .attr("font-size", "13px")
+    .attr("fill", "#444")
     .text(d => d[xKey]);
 }
 
-renderBarChart("#songChart", songData, "popularity", "song", d => `${d.song} (${d.artist})`);
-renderBarChart("#artistChart", artistData, "popularity", "artist", d => d.artist);
-renderBarChart("#genreChart", genreData, "count", "genre", d => d.genre);
+renderBarChart("#songChart", songData, "popularity", "song", d => `${d.song} (${d.artist})`, "#10b981");
+renderBarChart("#artistChart", artistData, "popularity", "artist", d => d.artist, "#3b82f6");
 </script>
 {% endblock %}
