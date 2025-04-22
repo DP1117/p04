@@ -121,13 +121,15 @@ def correlationmatrix():
 
 @app.route('/treemap')
 def treemap():
+    subset = df[['artist', 'genre', 'song', 'popularity']].dropna()
+
     def build_hierarchy(df):
         root = {"name": "Singer", "children": []}
-        grouped = df.groupby(["artist", "genre", "song"])["popularity"].sum().reset_index()
         artist_map = {}
 
-        for _, row in grouped.iterrows():
+        for _, row in df.iterrows():
             artist, genre, song, pop = row["artist"], row["genre"], row["song"], row["popularity"]
+
             if artist not in artist_map:
                 artist_node = {"name": artist, "children": []}
                 artist_map[artist] = artist_node
@@ -140,12 +142,12 @@ def treemap():
 
             genre_node["children"].append({
                 "name": song,
-                "value": pop
+                "value": float(pop)
             })
 
         return root
 
-    tree_data = build_hierarchy(df)
+    tree_data = build_hierarchy(subset)
     return render_template("treemap.html", data=json.dumps(tree_data))
 
 if __name__ == '__main__':

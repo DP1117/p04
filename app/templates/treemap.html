@@ -5,82 +5,89 @@
 
 <script src="https://d3js.org/d3.v7.min.js"></script>
 <script>
-const data = {{ data | safe }};
-const width = 960;
-const height = 600;
-const format = d3.format(",d");
-const color = d3.scaleOrdinal(d3.schemeTableau10);
+const rawData = {{ data | tojson }};
+const allFeatures = {{ features | tojson }};
+const margin = { top: 20, right: 10, bottom: 30, left: 30 };
+const width = 250 - margin.left - margin.right;
+const height = 180 - margin.top - margin.bottom;
+const colors = d3.scaleOrdinal(d3.schemeCategory10);
 
-const svg = d3.select("#treemap")
-  .append("svg")
-  .attr("viewBox", [0, 0, width, height])
-  .style("font-family", "sans-serif")
-  .style("font-size", "11px");
-
-const tooltip = d3.select("body").append("div")
-  .style("position", "absolute")
-  .style("background", "#111")
-  .style("color", "#fff")
-  .style("padding", "6px 8px")
-  .style("font-size", "12px")
-  .style("border-radius", "4px")
-  .style("pointer-events", "none")
+// Create floating tooltip div
+const tooltip = d3.select("body")
+  .append("div")
+  .attr("class", "absolute bg-black text-white text-xs px-2 py-1 rounded shadow-lg pointer-events-none")
   .style("opacity", 0);
 
-const root = d3.hierarchy(data).sum(d => d.value).sort((a, b) => b.value - a.value);
-const treemap = d3.treemap().size([width, height]).padding(2).round(true);
-treemap(root);
+// Render chart grid
+function drawMatrix(featuresToShow) {
+  const matrix = d3.select("#matrixGrid");
+  matrix.selectAll("*").remove();
 
-let currentRoot = root;
-render(currentRoot);
+  featuresToShow.forEach((feature, i) => {
+    const container = matrix.append("div")
+      .attr("class", "bg-white shadow rounded p-2 transition-transform duration-500 ease-out");
 
-function render(root) {
-  svg.selectAll("g").remove(); // Clean up previous render
-  const group = svg.append("g");
+    container.append("h3")
+      .text(feature.charAt(0).toUpperCase() + feature.slice(1))
+      .attr("class", "text-sm text-center font-semibold mb-2");
 
-  const nodes = group.selectAll("g")
-    .data(root.children)
-    .join("g")
-    .attr("transform", d => `translate(${d.x0},${d.y0})`);
+    const svg = container.append("svg")
+      .attr("width", width + margin.left + margin.right)
+      .attr("height", height + margin.top + margin.bottom)
+      .append("g")
+      .attr("transform", `translate(${margin.left},${margin.top})`);
 
-  nodes.append("rect")
-    .attr("fill", d => color(d.depth))
-    .attr("width", d => d.x1 - d.x0)
-    .attr("height", d => d.y1 - d.y0)
-    .attr("rx", 5)
-    .attr("ry", 5)
-    .on("mouseover", (event, d) => {
-      tooltip.transition().duration(200).style("opacity", 0.95);
-      tooltip.html(`<strong>${d.data.name}</strong><br>${d.value ? `Popularity: ${format(d.value)}` : ''}`);
-    })
-    .on("mousemove", event => {
-      tooltip.style("left", (event.pageX + 15) + "px").style("top", (event.pageY - 10) + "px");
-    })
-    .on("mouseout", () => {
-      tooltip.transition().duration(200).style("opacity", 0);
-    })
-    .on("click", (event, d) => {
-      if (d.children) zoomIn(d);
-    });
+    const values = rawData.map(d => +d[feature]);
+    const x = d3.scaleLinear().domain(d3.extent(values)).nice().range([0, width]);
+    const histogram = d3.histogram().domain(x.domain()).thresholds(x.ticks(15));
+    const bins = histogram(values);
+    const y = d3.scaleLinear().domain([0, d3.max(bins, d => d.length)]).nice().range([height, 0]);
 
-  nodes.append("text")
-    .attr("x", 6)
-    .attr("y", 14)
-    .text(d => {
-      const boxWidth = d.x1 - d.x0;
-      const name = d.data.name;
-      return name.length > 20 ? name.slice(0, 17) + "..." : name;
-    })
-    .attr("fill", "#fff")
-    .style("pointer-events", "none");
+    svg.append("g").attr("transform", `translate(0,${height})`).call(d3.axisBottom(x).ticks(4)).attr("font-size", "8px");
+    svg.append("g").call(d3.axisLeft(y).ticks(4)).attr("font-size", "8px");
+
+    svg.selectAll("rect")
+      .data(bins)
+      .enter()
+      .append("rect")
+      .attr("x", d => x(d.x0) + 1)
+      .attr("y", height)
+      .attr("width", d => Math.max(0, x(d.x1) - x(d.x0) - 1))
+      .attr("height", 0)
+      .attr("fill", colors(i))
+      .attr("opacity", 0.7)
+      .on("mouseover", (event, d) => {
+        tooltip.transition().duration(200).style("opacity", 0.95);
+        tooltip.html(
+          `<strong>${feature}</strong><br>
+           Range: ${d.x0.toFixed(2)} – ${d.x1.toFixed(2)}<br>
+           Count: ${d.length} song${d.length === 1 ? '' : 's'}`
+        );
+        d3.select(event.target).attr("opacity", 1);
+      })
+      .on("mousemove", (event) => {
+        tooltip
+          .style("left", `${event.pageX + 10}px`)
+          .style("top", `${event.pageY - 28}px`);
+      })
+      .on("mouseout", (event) => {
+        tooltip.transition().duration(200).style("opacity", 0);
+        d3.select(event.target).attr("opacity", 0.7);
+      })
+      .transition()
+      .duration(800)
+      .attr("y", d => y(d.length))
+      .attr("height", d => height - y(d.length));
+  });
 }
 
-function zoomIn(d) {
-  currentRoot = d;
-  treemap(currentRoot); // recalculate layout
-  const t = svg.transition().duration(750);
-  render(currentRoot);
-}
+drawMatrix(allFeatures);
+
+document.getElementById("featureSelect").addEventListener("change", function () {
+  const selected = Array.from(this.selectedOptions).map(opt => opt.value);
+  drawMatrix(selected.slice(0, 9));
+});
 </script>
+
 
 {% endblock %}
