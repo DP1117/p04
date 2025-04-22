@@ -54,7 +54,7 @@ def register():
                 conn.commit()
             return redirect(url_for('login'))
         except sqlite3.IntegrityError:
-            return "Username already exists!"
+            return redirect(url_for('error', type='nameTaken'))
     return render_template('register.html')
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -70,8 +70,17 @@ def login():
                 session['user'] = username
                 return redirect(url_for('home'))
             else:
-                return "Invalid credentials"
+                return redirect(url_for('error', type='wrongCredentials'))
     return render_template('login.html')
+    
+@app.route('/error')
+def error():
+    errorType = request.args.get('type')
+
+    return render_template('error.html',
+        notLoggedIn=(errorType == 'notLoggedIn'),
+        wrongCredentials=(errorType == 'wrongCredentials'),
+        nameTaken=(errorType == 'nameTaken'))
 
 @app.route('/logout')
 def logout():
@@ -80,12 +89,16 @@ def logout():
 
 @app.route('/visualize')
 def visualize():
+    if 'user' not in session:
+        return redirect(url_for('error', type='notLoggedIn'))
     numeric_cols = df.select_dtypes(include=['float64', 'int64']).columns.tolist()
     data = df[numeric_cols].dropna().to_dict(orient='records')
     return render_template('visualize.html', data=data, columns=numeric_cols)
 
 @app.route('/histo')
 def histo():
+    if 'user' not in session:
+        return redirect(url_for('error', type='notLoggedIn'))
     if 'popularity' not in df.columns:
         return "Popularity column not found in the dataset."
     data = df[['popularity']].dropna().to_dict(orient='records')
@@ -96,8 +109,9 @@ def about():
     return render_template('about.html')
 
 @app.route('/matrix')
-@app.route('/matrix')
 def matrix():
+    if 'user' not in session:
+        return redirect(url_for('error', type='notLoggedIn'))
     features = ['popularity', 'danceability', 'energy', 'loudness', 'speechiness',
                 'acousticness', 'liveness', 'valence', 'tempo']
     data = df[features].dropna().to_dict(orient='records')
@@ -105,6 +119,8 @@ def matrix():
 
 @app.route('/correlationmatrix')
 def correlationmatrix():
+    if 'user' not in session:
+        return redirect(url_for('error', type='notLoggedIn'))
     corr_matrix = df.corr(numeric_only=True).round(3)
     labels = corr_matrix.columns.tolist()
     matrix_data = []
@@ -121,6 +137,8 @@ def correlationmatrix():
 
 @app.route('/treemap')
 def treemap():
+    if 'user' not in session:
+        return redirect(url_for('error', type='notLoggedIn'))
     subset = df[['artist', 'genre', 'song', 'popularity']].dropna()
 
     def build_hierarchy(df):
@@ -149,7 +167,6 @@ def treemap():
 
     tree_data = build_hierarchy(subset)
     return render_template("treemap.html", data=json.dumps(tree_data))
-
 
 if __name__ == '__main__':
     init_db()

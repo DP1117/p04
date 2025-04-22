@@ -20,9 +20,21 @@
             <nav class="space-x-4">
                 <a href="{{ url_for('home') }}" class="hover:underline">Home</a>
                 <a href="{{ url_for('about') }}" class="hover:underline">About</a>
+
+                <div class="relative group inline-block">
+                    <div class="hover:underline cursor-pointer">Data</div>
+                    <div class="absolute hidden group-hover:block bg-white text-gray-800 shadow-md rounded-md z-10 min-w-[10rem] transition-all duration-200">
+                        <a href="{{ url_for('matrix') }}" class="block px-4 py-2 hover:bg-gray-100">Matrix</a>
+                        <a href="{{ url_for('histo') }}" class="block px-4 py-2 hover:bg-gray-100">Histogram</a>
+                        <a href="{{ url_for('treemap') }}" class="block px-4 py-2 hover:bg-gray-100">Treemap</a>
+                        <a href="{{ url_for('visualize') }}" class="block px-4 py-2 hover:bg-gray-100">Visualize</a>
+                        <a href="{{ url_for('correlationmatrix') }}" class="block px-4 py-2 hover:bg-gray-100">Correlation Matrix</a>
+                    </div>
+                </div>
+
+                
                 {% if 'user' in session %}
-                <a href="{{ url_for('matrix') }}" class="hover:underline">Matrix</a>
-                <span class="font-semibold">Logged in as {{ session['user'] }}</span>
+                <span class="font-semibold">Logged in as {{ session['user'] }}!</span>
                 <a href="{{ url_for('logout') }}" class="hover:underline">Logout</a>
                 {% else %}
                 <a href="{{ url_for('login') }}" class="hover:underline">Login</a>
