@@ -60,3 +60,5 @@ HOME STRETCH CHECKLIST:
 jaydenZ -- 2025-04-22 11:56
 Fixed the axis problem so that you can't select two. Added comments to make it better understandable. 
 
+jaydenZ -- 2025-04-22 18:23
+Added error.html and fixed logic in init.py. Also added features to nav bar and made QoL updates to the website.
