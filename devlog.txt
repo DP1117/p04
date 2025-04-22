@@ -38,3 +38,11 @@ DESIGN REVISIONS THUS FAR:
 
 jaydenZ -- 2025-04-21 10:30
 Worked on the css and html functionalities of the website; followed the devlog.
+
+HOME STRETCH CHECKLIST:
+------------------------------------
+* Make sure all the functionalities work (e.g., fix axies on graph) :: Jayden, Jackie
+* Ensure video is taken in preparation for tomorrow :: Daniel
+* Finish matrix part :: Aditya
+* Practice our own parts :: ALL TEAM MEMBERS
+====================================
