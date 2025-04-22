@@ -7,7 +7,7 @@
     <span class="block text-sm font-medium text-gray-700">X Axis:</span>
     <select id="xSelect" class="border p-2 rounded w-48">
       {% for col in columns %}
-        <option value="{{ col }}">{{ col|capitalize }}</option>
+        <option value="{{ col }}">{{ col }}</option>
       {% endfor %}
     </select>
   </label>
@@ -15,7 +15,7 @@
     <span class="block text-sm font-medium text-gray-700">Y Axis:</span>
     <select id="ySelect" class="border p-2 rounded w-48">
       {% for col in columns %}
-        <option value="{{ col }}" {% if col == 'popularity' %}selected{% endif %}>{{ col|capitalize }}</option>
+        <option value="{{ col }}" {% if col == 'popularity' %}selected{% endif %}>{{ col }}</option>
       {% endfor %}
     </select>
   </label>
@@ -25,36 +25,36 @@
 
 <script src="https://d3js.org/d3.v7.min.js"></script>
 <script>
-  const data = {{ data | tojson }};
-  const columns = {{ columns | tojson }};
-  const margin = { top: 40, right: 30, bottom: 50, left: 60 };
+  const data = {{ data | tojson }}; // spotify data
+  const columns = {{ columns | tojson }}; // each column of the data set
+  const margin = { top: 40, right: 30, bottom: 50, left: 60 }; // css styling
   const width = 800 - margin.left - margin.right;
   const height = 500 - margin.top - margin.bottom;
 
-  const svg = d3.select("#chart").append("svg")
+  const svg = d3.select("#chart").append("svg") // d3 chart picture w/ attibutes as provided by the d3 website
       .attr("width", width + margin.left + margin.right)
       .attr("height", height + margin.top + margin.bottom)
     .append("g")
       .attr("transform", `translate(${margin.left},${margin.top})`);
 
-  const xAxisGroup = svg.append("g").attr("transform", `translate(0, ${height})`);
+  const xAxisGroup = svg.append("g").attr("transform", `translate(0, ${height})`); // dropdowns for the axises
   const yAxisGroup = svg.append("g");
 
-  const xLabel = svg.append("text")
+  const xLabel = svg.append("text") // x-axis labels w/ d3 styling
       .attr("x", width / 2)
       .attr("y", height + 40)
       .attr("text-anchor", "middle")
       .attr("class", "text-sm font-semibold");
 
-  const yLabel = svg.append("text")
+  const yLabel = svg.append("text") // y-axis labels w/ d3 styling
       .attr("transform", "rotate(-90)")
       .attr("y", -45)
       .attr("x", -height / 2)
       .attr("text-anchor", "middle")
       .attr("class", "text-sm font-semibold");
 
-  const updateChart = (xKey, yKey) => {
-    const x = d3.scaleLinear()
+  const updateChart = (xKey, yKey) => { // when the user chooses a new value to update the axises with
+    const x = d3.scaleLinear() 
       .domain(d3.extent(data, d => +d[xKey])).nice()
       .range([0, width]);
 
@@ -64,7 +64,7 @@
 
     const dots = svg.selectAll("circle").data(data);
 
-    dots.enter()
+    dots.enter() // fixing all the dots when the axises are updated; css for the dots as well
       .append("circle")
       .merge(dots)
       .transition()
@@ -77,19 +77,40 @@
 
     dots.exit().remove();
 
-    xAxisGroup.transition().duration(800).call(d3.axisBottom(x));
+    xAxisGroup.transition().duration(800).call(d3.axisBottom(x)); // cool transitions that d3 provides
     yAxisGroup.transition().duration(800).call(d3.axisLeft(y));
 
     xLabel.text(xKey.charAt(0).toUpperCase() + xKey.slice(1));
     yLabel.text(yKey.charAt(0).toUpperCase() + yKey.slice(1));
   };
 
-  const xSelect = document.getElementById("xSelect");
-  const ySelect = document.getElementById("ySelect");
+  const xSelect = document.getElementById("xSelect"); // selectors for HTML code
+  const ySelect = document.getElementById("ySelect"); 
 
-  xSelect.addEventListener("change", () => updateChart(xSelect.value, ySelect.value));
-  ySelect.addEventListener("change", () => updateChart(xSelect.value, ySelect.value));
+  const updateDropdowns = () => { // updates dropdowns when a new value is chosen as it disables the other column's selected option
+    const xValue = xSelect.value;
+    const yValue = ySelect.value;
 
+    xSelect.innerHTML = columns.map(col => 
+      `<option value="${col}" ${col === xValue ? "selected" : ""} ${col === yValue ? "disabled" : ""}>${col}</option>` // if it's selected, the y-column disables that option
+    ).join("");
+
+    ySelect.innerHTML = columns.map(col => 
+      `<option value="${col}" ${col === yValue ? "selected" : ""} ${col === xValue ? "disabled" : ""}>${col}</option>` // if it's selected, the x-column disables that option
+    ).join("");
+  };
+
+  xSelect.addEventListener("change", () => { // if it's changed, updated the chart's x-axis
+    updateDropdowns();
+    updateChart(xSelect.value, ySelect.value);
+  });
+
+  ySelect.addEventListener("change", () => { // if it's changed, updated the chart's y-axis
+    updateDropdowns();
+    updateChart(xSelect.value, ySelect.value);
+  });
+
+  updateDropdowns(); // for when the user first logs onto the page
   updateChart(xSelect.value, ySelect.value);
 </script>
 {% endblock %}
