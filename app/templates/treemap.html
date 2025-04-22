@@ -1,98 +1,101 @@
 {% extends 'base.html' %}
 {% block content %}
-<h2 class="text-3xl font-bold mb-6 text-center text-green-700">Zoomable TreeMap of Singers</h2>
-<div id="treemap" class="overflow-x-auto flex justify-center"></div>
+  <h2 class="text-3xl font-bold mb-4 text-center text-green-700">
+    Zoomable TreeMap of Spotify Top Hits
+  </h2>
 
-<script src="https://d3js.org/d3.v7.min.js"></script>
-<script>
-const data = {{ data | safe }};
-const width = 960;
-const height = 600;
-const format = d3.format(",d");
 
-const color = d3.scaleOrdinal()
-  .domain(["Singer"])
-  .range(d3.schemeSet3);
+  <nav id="breadcrumb" class="text-sm text-gray-600 mb-2 text-center"></nav>
 
-const svg = d3.select("#treemap")
-  .append("svg")
-  .attr("width", width)
-  .attr("height", height)
-  .style("font-family", "Inter, sans-serif")
-  .style("font-size", "12px");
 
-const tooltip = d3.select("body")
-  .append("div")
-  .style("position", "absolute")
-  .style("background", "#000")
-  .style("color", "#fff")
-  .style("padding", "6px 8px")
-  .style("font-size", "12px")
-  .style("border-radius", "4px")
-  .style("pointer-events", "none")
-  .style("opacity", 0);
+  <div id="treemap" class="overflow-auto border rounded-md shadow-sm"></div>
 
-// Build hierarchy
-const root = d3.hierarchy(data).sum(d => d.value).sort((a, b) => b.value - a.value);
-const treemap = d3.treemap().size([width, height]).paddingInner(3);
-treemap(root);
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script>
 
-let currentRoot = root;
-render(root);
+    const data = {{ data | safe }};
+    const width = 960, height = 600;
+    const format = d3.format(",d");
+    const color = d3.scaleOrdinal(d3.schemeSet3);
 
-// Render function
-function render(source) {
-  svg.selectAll("*").remove(); // clear everything
 
-  const nodes = svg.selectAll("g")
-    .data(source.children)
-    .join("g")
-    .attr("transform", d => `translate(${d.x0},${d.y0})`);
+    const svg = d3.select("#treemap")
+      .append("svg")
+      .attr("width", width)
+      .attr("height", height)
+      .style("font-family", "Inter, sans-serif")
+      .style("font-size", "12px");
 
-  nodes.append("rect")
-    .attr("width", d => d.x1 - d.x0)
-    .attr("height", d => d.y1 - d.y0)
-    .attr("fill", d => color(d.ancestors().map(d => d.data.name).join("/")))
-    .attr("rx", 4)
-    .attr("ry", 4)
-    .style("cursor", d => d.children ? "pointer" : "default")
-    .on("mouseover", (event, d) => {
-      tooltip.transition().duration(200).style("opacity", 1);
-      tooltip.html(`
-        <b>${d.data.name}</b><br>
-        ${d.value ? `Popularity: ${format(d.value)}` : ''}
-      `);
-    })
-    .on("mousemove", event => {
-      tooltip.style("left", (event.pageX + 15) + "px")
-             .style("top", (event.pageY - 10) + "px");
-    })
-    .on("mouseout", () => {
-      tooltip.transition().duration(200).style("opacity", 0);
-    })
-    .on("click", (event, d) => {
-      if (d.children && d.children.length > 0) {
-        zoom(d);
-      }
-    });
 
-  nodes.append("text")
-    .attr("x", 6)
-    .attr("y", 16)
-    .attr("fill", "#fff")
-    .text(d => {
-      const w = d.x1 - d.x0;
-      return w > 60 ? d.data.name.slice(0, 18) : "";
-    })
-    .style("pointer-events", "none");
-}
+    const tooltip = d3.select("body").append("div")
+      .style("position","absolute").style("background","rgba(0,0,0,0.8)")
+      .style("color","#fff").style("padding","6px 8px").style("border-radius","4px")
+      .style("pointer-events","none").style("opacity",0);
 
-// Zoom function (fixed)
-function zoom(d) {
-  treemap(d);
-  currentRoot = d;
 
-  svg.transition().duration(500).on("end", () => render(currentRoot));
-}
-</script>
+    let root = d3.hierarchy(data).sum(d=>d.value).sort((a,b)=>b.value - a.value);
+    const treemap = d3.treemap().size([width,height]).paddingInner(2);
+    treemap(root);
+
+    let focus = root;
+
+    const node = svg.selectAll("g")
+      .data(root.descendants())
+      .join("g")
+      .attr("transform", d=>`translate(${d.x0},${d.y0})`)
+      .on("click", (event,d)=>{ if(focus!==d){ zoom(d); event.stopPropagation(); } });
+
+    node.append("rect")
+      .attr("width", d=>d.x1-d.x0).attr("height", d=>d.y1-d.y0)
+      .attr("fill", d=>color(d.depth)).attr("rx",4).attr("ry",4)
+      .style("cursor", d=>d.children?"pointer":"default")
+      .on("mouseover",(e,d)=>{
+        tooltip.transition().duration(150).style("opacity",0.9);
+        tooltip.html(`<strong>${d.data.name}</strong><br>Popularity: ${format(d.value)}`)
+               .style("left",(e.pageX+10)+"px").style("top",(e.pageY-28)+"px");
+      })
+      .on("mouseout",()=>tooltip.transition().duration(150).style("opacity",0));
+
+    node.append("clipPath")
+      .attr("id", d=>(d.clipUid = d3.uid("clip")).id)
+      .append("use").attr("xlink:href", d=>d.uid.href);
+
+    node.append("text")
+      .attr("clip-path", d=>d.clipUid)
+      .selectAll("tspan")
+      .data(d=>d.data.name.split(/\s+/))
+      .join("tspan")
+      .attr("x",4).attr("y",(_,i)=>14 + i*10)
+      .text(t=> t.length>15? t.slice(0,12)+"…": t)
+      .attr("fill","#fff").style("pointer-events","none");
+
+
+    svg.append("rect")
+      .attr("width",width).attr("height",height)
+      .attr("fill","none").attr("pointer-events","all")
+      .on("click",()=>zoom(root));
+
+
+    const bc = d3.select("#breadcrumb");
+    function updateBreadcrumb(d){
+      const anc = d.ancestors().reverse();
+      bc.selectAll("span").remove();
+      bc.selectAll("span").data(anc).join("span")
+        .html((d,i)=>`<a href="#" data-index="${i}" class="text-green-600 hover:underline">${d.data.name}</a>${i<anc.length-1?" ▶ ":''}`)
+        .on("click",(e,d)=>{ zoom(d); e.preventDefault(); });
+    }
+    updateBreadcrumb(root);
+
+
+    function zoom(d){
+      focus = d;
+      treemap(focus);
+      const t = svg.transition().duration(750);
+      node.transition(t)
+        .attr("transform", d=>`translate(${d.x0},${d.y0})`);
+      node.select("rect").transition(t)
+        .attr("width", d=>d.x1-d.x0).attr("height", d=>d.y1-d.y0);
+      updateBreadcrumb(d);
+    }
+  </script>
 {% endblock %}

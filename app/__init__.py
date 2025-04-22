@@ -137,36 +137,31 @@ def correlationmatrix():
 
 @app.route('/treemap')
 def treemap():
-    if 'user' not in session:
-        return redirect(url_for('error', type='notLoggedIn'))
-    subset = df[['artist', 'genre', 'song', 'popularity']].dropna()
+    # only keep rows with no missing values in these columns
+    subset = df[['artist','genre','song','popularity']].dropna()
 
+    # build the nested hierarchy
     def build_hierarchy(df):
-        root = {"name": "Singer", "children": []}
+        root = {"name":"All Songs","children":[]}
         artist_map = {}
-
         for _, row in df.iterrows():
-            artist, genre, song, pop = row["artist"], row["genre"], row["song"], row["popularity"]
-
+            artist, genre, song, pop = row["artist"], row["genre"], row["song"], float(row["popularity"])
             if artist not in artist_map:
                 artist_node = {"name": artist, "children": []}
                 artist_map[artist] = artist_node
                 root["children"].append(artist_node)
-
-            genre_node = next((g for g in artist_map[artist]["children"] if g["name"] == genre), None)
-            if not genre_node:
-                genre_node = {"name": genre, "children": []}
-                artist_map[artist]["children"].append(genre_node)
-
-            genre_node["children"].append({
-                "name": song,
-                "value": float(pop)
-            })
-
+            # find or create genre under that artist
+            gen = next((g for g in artist_map[artist]["children"] if g["name"]==genre), None)
+            if not gen:
+                gen = {"name": genre, "children": []}
+                artist_map[artist]["children"].append(gen)
+            # append song leaf
+            gen["children"].append({"name": song, "value": pop})
         return root
 
     tree_data = build_hierarchy(subset)
-    return render_template("treemap.html", data=json.dumps(tree_data))
+    # pass JSON string into template
+    return render_template('treemap.html', data=json.dumps(tree_data))
 
 if __name__ == '__main__':
     init_db()
