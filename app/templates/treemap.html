@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2 class="text-3xl font-bold mb-6 text-center text-green-700">Zoomable TreeMap of Singers</h2>
+<div id="treemap" class="flex justify-center overflow-auto"></div>
+
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script>
+const allFeatures = {{ features | tojson }};
+const margin = { top: 20, right: 10, bottom: 30, left: 30 };
+const width = 250 - margin.left - margin.right;
+const height = 180 - margin.top - margin.bottom;
+const colors = d3.scaleOrdinal(d3.schemeCategory10);
+
+// Create floating tooltip div
+const tooltip = d3.select("body")
+  .append("div")
+  .attr("class", "absolute bg-black text-white text-xs px-2 py-1 rounded shadow-lg pointer-events-none")
+  .style("opacity", 0);
+
+// Render chart grid
+function drawMatrix(featuresToShow) {
+  const matrix = d3.select("#matrixGrid");
+  matrix.selectAll("*").remove();
+
+  featuresToShow.forEach((feature, i) => {
+    const container = matrix.append("div")
+      .attr("class", "bg-white shadow rounded p-2 transition-transform duration-500 ease-out");
+
+    container.append("h3")
+      .text(feature.charAt(0).toUpperCase() + feature.slice(1))
+      .attr("class", "text-sm text-center font-semibold mb-2");
+
+    const svg = container.append("svg")
+      .attr("width", width + margin.left + margin.right)
+      .attr("height", height + margin.top + margin.bottom)
+      .append("g")
+      .attr("transform", `translate(${margin.left},${margin.top})`);
+
+    const values = rawData.map(d => +d[feature]);
+    const x = d3.scaleLinear().domain(d3.extent(values)).nice().range([0, width]);
+    const histogram = d3.histogram().domain(x.domain()).thresholds(x.ticks(15));
+    const bins = histogram(values);
+    const y = d3.scaleLinear().domain([0, d3.max(bins, d => d.length)]).nice().range([height, 0]);
+
+    svg.append("g").attr("transform", `translate(0,${height})`).call(d3.axisBottom(x).ticks(4)).attr("font-size", "8px");
+    svg.append("g").call(d3.axisLeft(y).ticks(4)).attr("font-size", "8px");
+
+    svg.selectAll("rect")
+      .data(bins)
+      .enter()
+      .append("rect")
+      .attr("x", d => x(d.x0) + 1)
+      .attr("y", height)
+      .attr("width", d => Math.max(0, x(d.x1) - x(d.x0) - 1))
+      .attr("height", 0)
+      .attr("fill", colors(i))
+      .attr("opacity", 0.7)
+      .on("mouseover", (event, d) => {
+        tooltip.transition().duration(200).style("opacity", 0.95);
+        tooltip.html(
+          `<strong>${feature}</strong><br>
+           Range: ${d.x0.toFixed(2)} – ${d.x1.toFixed(2)}<br>
+           Count: ${d.length} song${d.length === 1 ? '' : 's'}`
+        );
+        d3.select(event.target).attr("opacity", 1);
+      })
+      .on("mousemove", (event) => {
+        tooltip
+          .style("left", `${event.pageX + 10}px`)
+          .style("top", `${event.pageY - 28}px`);
+      })
+      .on("mouseout", (event) => {
+        tooltip.transition().duration(200).style("opacity", 0);
+        d3.select(event.target).attr("opacity", 0.7);
+      })
+      .transition()
+      .duration(800)
+      .attr("y", d => y(d.length))
+      .attr("height", d => height - y(d.length));
+  });
+}
+
+drawMatrix(allFeatures);
+
+document.getElementById("featureSelect").addEventListener("change", function () {
+  const selected = Array.from(this.selectedOptions).map(opt => opt.value);
+  drawMatrix(selected.slice(0, 9));
+});
+</script>
+
+
+{% endblock %}

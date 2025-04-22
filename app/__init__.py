@@ -11,6 +11,8 @@ from plotly.subplots import make_subplots
 import seaborn as sns
 import datetime as dt
 import warnings
+import json
+
 warnings.filterwarnings('ignore')
 pd.set_option('display.max_columns',None)
 #init_notebook_mode(connected=True)
@@ -116,6 +118,37 @@ def correlationmatrix():
             })
 
     return render_template("correlationmatrix.html", labels=labels, matrix=matrix_data)
+
+@app.route('/treemap')
+def treemap():
+    subset = df[['artist', 'genre', 'song', 'popularity']].dropna()
+
+    def build_hierarchy(df):
+        root = {"name": "Singer", "children": []}
+        artist_map = {}
+
+        for _, row in df.iterrows():
+            artist, genre, song, pop = row["artist"], row["genre"], row["song"], row["popularity"]
+
+            if artist not in artist_map:
+                artist_node = {"name": artist, "children": []}
+                artist_map[artist] = artist_node
+                root["children"].append(artist_node)
+
+            genre_node = next((g for g in artist_map[artist]["children"] if g["name"] == genre), None)
+            if not genre_node:
+                genre_node = {"name": genre, "children": []}
+                artist_map[artist]["children"].append(genre_node)
+
+            genre_node["children"].append({
+                "name": song,
+                "value": float(pop)
+            })
+
+        return root
+
+    tree_data = build_hierarchy(subset)
+    return render_template("treemap.html", data=json.dumps(tree_data))
 
 
 if __name__ == '__main__':
