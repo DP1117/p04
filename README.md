@@ -29,12 +29,5 @@ Our goal is to create an interactive Flask web application that helps users expl
 ```
     $pip install -r requirements.txt
 ```
-### 6) Acquire your API Keys
-```
-    - Navigate to reademe.md and follow the links within to acquire API keys
-    - Place your API keys into key_<API Name>.txt for each API locally.
-    - Run command below to keep your API from being pushed to github:
-        git update-index --skip-worktree <path-name>
-```
 
 
