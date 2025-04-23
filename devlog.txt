@@ -62,3 +62,17 @@ Fixed the axis problem so that you can't select two. Added comments to make it b
 
 jaydenZ -- 2025-04-22 18:23
 Added error.html and fixed logic in init.py. Also added features to nav bar and made QoL updates to the website.
+
+### FEATURE SPOTLIGHT
+* Histogram
+* Feature Distributions
+* Top Artists
+* Coorelation Matrix
+* Visualize
+
+### KNOWN BUGS/ISSUES
+* Didn't add a search button to filter data by artist, genre, energy, etc.
+* Removed API feature.
+
+danielP, adityaA, jaydenZ, jackieZ-- 2025-04-022 23:52
+Made changes to design doc, specifically edited the routings of the pages. We broke apart the visualize.html into different subsection pages with different html pages: histo.html, topcharts.html, coorelationmatrix.html, visualize.html. Each has a different visualization and feature to analyze the patterns of the songs. We also removed the API Spotify feature, since we didn't have time for that. Finally, we changed the site map to reflect the changes in the routing.
