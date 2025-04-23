@@ -71,4 +71,4 @@ Added error.html and fixed logic in init.py. Also added features to nav bar and 
 * Visualize
 
 ### KNOWN BUGS/ISSUES
-* NONE
+* Didn't add a search button to filter data by artist, genre, energy, etc.
